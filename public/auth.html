@@ -53,7 +53,9 @@
       .card {
         position: relative;
         z-index: 2;
-        width: min(430px, 94vw);
+        width: min(460px, 94vw);
+        max-height: 94vh;
+        overflow-y: auto;
         background: rgba(255, 255, 255, 0.93);
         backdrop-filter: blur(14px);
         border-radius: 32px;
@@ -80,6 +82,40 @@
       .logo span {
         color: #ff4757;
       }
+
+      /* تب‌ها */
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .tab {
+        flex: 1;
+        text-align: center;
+        padding: 11px;
+        border-radius: 14px;
+        font-weight: 900;
+        cursor: pointer;
+        background: #f1f2f6;
+        color: #888;
+        transition: 0.3s;
+        border: none;
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+      .tab.active {
+        background: linear-gradient(135deg, #ff4757, #ff6348);
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(255, 71, 87, 0.35);
+      }
+      .view {
+        display: none;
+        flex-direction: column;
+      }
+      .view.active {
+        display: flex;
+      }
+
       input {
         padding: 14px 17px;
         font-family: inherit;
@@ -95,6 +131,17 @@
         border-color: #ff4757;
         box-shadow: 0 0 0 5px rgba(255, 71, 87, 0.13);
       }
+      select {
+        padding: 14px 17px;
+        font-family: inherit;
+        font-size: 1rem;
+        border: 2px solid #eee;
+        border-radius: 15px;
+        outline: none;
+        width: 100%;
+        margin-bottom: 12px;
+        background: #fff;
+      }
       .btn {
         padding: 15px;
         width: 100%;
@@ -108,6 +155,7 @@
         background: linear-gradient(135deg, #1e90ff, #3742fa);
         transition: 0.3s;
         animation: pulseB 2.2s infinite;
+        margin-top: 4px;
       }
       .btn:hover {
         transform: scale(1.03);
@@ -130,12 +178,13 @@
         border-radius: 13px;
         text-align: center;
         margin-bottom: 12px;
+        font-size: 0.88rem;
       }
       .divider {
         text-align: center;
         color: #aaa;
         font-weight: 800;
-        margin: 24px 0 14px;
+        margin: 22px 0 16px;
         font-size: 0.85rem;
       }
       .reg-cards {
@@ -154,8 +203,11 @@
         border: 2px solid #eee;
         background: #fff;
         color: #666;
+        cursor: pointer;
+        font-family: inherit;
       }
-      .rc:hover {
+      .rc:hover,
+      .rc.sel {
         transform: translateY(-6px);
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
       }
@@ -166,13 +218,13 @@
         margin-top: 4px;
         font-size: 0.72rem;
       }
-      .rc-pat:hover {
+      .rc-pat.sel {
         border-color: #2ed573;
       }
-      .rc-doc:hover {
+      .rc-doc.sel {
         border-color: #54a0ff;
       }
-      .rc-phar:hover {
+      .rc-phar.sel {
         border-color: #a55eea;
       }
     </style>
@@ -187,34 +239,125 @@
     <div class="card">
       <div class="logo">🩺 هارت<span>باکس</span></div>
 
-      <!-- 🔓 فقط ورود -->
-      <form
-        onsubmit="doLogin(event)"
-        style="display: flex; flex-direction: column"
-      >
+      <!-- 🗂 تب‌ها -->
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" onclick="showView('login')">
+          🔓 ورود
+        </button>
+        <button class="tab" id="tabReg" onclick="showView('reg')">
+          📝 ثبت‌نام
+        </button>
+      </div>
+
+      <!-- 🔓 فرم ورود -->
+      <form id="viewLogin" class="view active" onsubmit="doLogin(event)">
         <input id="lPhone" placeholder="📱 شماره موبایل" required />
         <input id="lPass" type="password" placeholder="🔑 رمز عبور" required />
         <div class="err" id="errL"></div>
         <button class="btn">ورود به حساب ❤️</button>
       </form>
 
-      <div class="divider">— یا ثبت‌نام به‌عنوان —</div>
+      <!-- 📝 فرم ثبت‌نام -->
+      <form id="viewReg" class="view" onsubmit="doRegister(event)">
+        <input id="rName" placeholder="👤 نام و نام خانوادگی" required />
 
-      <!-- 🎭 سه صفحه ثبت‌نام جدا -->
-      <div class="reg-cards">
-        <a class="rc rc-pat" href="register-patient.html"
-          >👤 بیمار<small>رایگان و سریع</small></a
-        >
-        <a class="rc rc-doc" href="register-doctor.html"
-          >🩺 پزشک<small>با نظام پزشکی</small></a
-        >
-        <a class="rc rc-phar" href="register-pharmacist.html"
-          >💊 داروساز<small>با پروانه</small></a
-        >
-      </div>
+        <!-- انتخاب نقش -->
+        <div class="reg-cards" style="margin-bottom: 12px">
+          <button
+            type="button"
+            class="rc rc-pat sel"
+            onclick="pickRole(this, 'patient')"
+          >
+            👤 بیمار<small>رایگان و سریع</small>
+          </button>
+          <button
+            type="button"
+            class="rc rc-doc"
+            onclick="pickRole(this, 'doctor')"
+          >
+            🩺 پزشک<small>با نظام پزشکی</small>
+          </button>
+          <button
+            type="button"
+            class="rc rc-phar"
+            onclick="pickRole(this, 'pharmacist')"
+          >
+            💊 داروساز<small>با پروانه</small>
+          </button>
+        </div>
+
+        <!-- مدرک پزشک/داروساز (فقط وقتی لازم است) -->
+        <input
+          id="rMedical"
+          placeholder="🪪 کد نظام پزشکی / شماره پروانه"
+          style="display: none"
+        />
+        <input
+          id="rSpec"
+          placeholder="🎯 تخصص (برای پزشک)"
+          style="display: none"
+        />
+
+        <input id="rPhone" placeholder="📱 شماره موبایل (09...)" required />
+        <input
+          id="rPass"
+          type="password"
+          placeholder="🔑 رمز عبور (حداقل ۶ کاراکتر)"
+          required
+        />
+        <div class="err" id="errR"></div>
+        <button class="btn">ساخت حساب 🚀</button>
+      </form>
     </div>
 
     <script>
+      // ---------- 🗂 سوییچ بین ورود/ثبت‌نام ----------
+      function showView(v) {
+        document
+          .getElementById("viewLogin")
+          .classList.toggle("active", v === "login");
+        document
+          .getElementById("viewReg")
+          .classList.toggle("active", v === "reg");
+        document
+          .getElementById("tabLogin")
+          .classList.toggle("active", v === "login");
+        document
+          .getElementById("tabReg")
+          .classList.toggle("active", v === "reg");
+      }
+
+      // ---------- 🎭 انتخاب نقش ----------
+      let selectedRole = "patient";
+      function pickRole(btn, role) {
+        selectedRole = role;
+        document
+          .querySelectorAll(".rc")
+          .forEach((b) => b.classList.remove("sel"));
+        btn.classList.add("sel");
+        const isMed = role !== "patient";
+        rMedical.style.display = isMed ? "block" : "none";
+        rMedical.required = isMed;
+        rSpec.style.display = role === "doctor" ? "block" : "none";
+      }
+
+      // ---------- ذخیره توکن بعد از ورود/ثبت‌نام ----------
+      function saveAuth(j) {
+        localStorage.setItem("token", j.token);
+        localStorage.setItem("role", j.role);
+        localStorage.setItem("name", j.name);
+      }
+
+      function goTo(role) {
+        location.href =
+          role === "admin"
+            ? "admin.html"
+            : role === "doctor"
+              ? "dashboard.html"
+              : "dashboard.html";
+      }
+
+      // ---------- 🔓 ورود ----------
       async function doLogin(e) {
         e.preventDefault();
         errL.style.display = "none";
@@ -233,20 +376,42 @@
             errL.style.display = "block";
             return;
           }
-
-          // ✅ ذخیره توکن و اطلاعات کاربر  ←←← اینجا
-          localStorage.setItem("token", j.token);
-          localStorage.setItem("role", j.role);
-          localStorage.setItem("name", j.name);
-
-          // 🧭 هدایت بر اساس نقش
-          const target =
-            { doctor: "doctor-panel.html", admin: "admin.html" }[j.role] ||
-            "dashboard.html";
-          location.href = target;
+          saveAuth(j);
+          goTo(j.role);
         } catch (err) {
           errL.textContent = "⚠️ خطا در ارتباط با سرور!";
           errL.style.display = "block";
+        }
+      }
+
+      // ---------- 📝 ثبت‌نام ----------
+      async function doRegister(e) {
+        e.preventDefault();
+        errR.style.display = "none";
+        try {
+          const r = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: rPhone.value.trim(),
+              password: rPass.value,
+              full_name: rName.value.trim(),
+              role: selectedRole,
+              medical_id: rMedical.value.trim(),
+              specialty: rSpec.value.trim(),
+            }),
+          });
+          const j = await r.json();
+          if (!j.ok) {
+            errR.textContent = "⚠️ " + (j.error || "خطا در ثبت‌نام");
+            errR.style.display = "block";
+            return;
+          }
+          saveAuth(j); // ✅ توکن ذخیره می‌شود
+          goTo(j.role); // ✅ هدایت به داشبورد
+        } catch (err) {
+          errR.textContent = "⚠️ خطا در ارتباط با سرور!";
+          errR.style.display = "block";
         }
       }
     </script>
