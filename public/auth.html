@@ -336,12 +336,15 @@
           .forEach((b) => b.classList.remove("sel"));
         btn.classList.add("sel");
         const isMed = role !== "patient";
-        rMedical.style.display = isMed ? "block" : "none";
-        rMedical.required = isMed;
-        rSpec.style.display = role === "doctor" ? "block" : "none";
+        document.getElementById("rMedical").style.display = isMed
+          ? "block"
+          : "none";
+        document.getElementById("rMedical").required = isMed;
+        document.getElementById("rSpec").style.display =
+          role === "doctor" ? "block" : "none";
       }
 
-      // ---------- ذخیره توکن بعد از ورود/ثبت‌نام ----------
+      // ---------- ذخیره توکن ----------
       function saveAuth(j) {
         localStorage.setItem("token", j.token);
         localStorage.setItem("role", j.role);
@@ -349,69 +352,68 @@
       }
 
       function goTo(role) {
-        location.href =
-          role === "admin"
-            ? "admin.html"
-            : role === "doctor"
-              ? "dashboard.html"
-              : "dashboard.html";
+        location.href = "dashboard.html";
       }
 
       // ---------- 🔓 ورود ----------
       async function doLogin(e) {
         e.preventDefault();
-        errL.style.display = "none";
+        document.getElementById("errL").style.display = "none";
         try {
           const r = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              phone: lPhone.value.trim(),
-              password: lPass.value,
+              phone: document.getElementById("lPhone").value.trim(),
+              password: document.getElementById("lPass").value,
             }),
           });
           const j = await r.json();
           if (!j.ok) {
-            errL.textContent = "⚠️ " + (j.error || "خطا در ورود");
-            errL.style.display = "block";
+            document.getElementById("errL").textContent =
+              "⚠️ " + (j.error || "خطا در ورود");
+            document.getElementById("errL").style.display = "block";
             return;
           }
           saveAuth(j);
           goTo(j.role);
         } catch (err) {
-          errL.textContent = "⚠️ خطا در ارتباط با سرور!";
-          errL.style.display = "block";
+          document.getElementById("errL").textContent =
+            "⚠️ خطا در ارتباط با سرور!";
+          document.getElementById("errL").style.display = "block";
         }
       }
 
       // ---------- 📝 ثبت‌نام ----------
       async function doRegister(e) {
         e.preventDefault();
-        errR.style.display = "none";
+        document.getElementById("errR").style.display = "none";
         try {
           const r = await fetch("/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              phone: rPhone.value.trim(),
-              password: rPass.value,
-              full_name: rName.value.trim(),
+              phone: document.getElementById("rPhone").value.trim(),
+              password: document.getElementById("rPass").value,
+              full_name: document.getElementById("rName").value.trim(),
               role: selectedRole,
-              medical_id: rMedical.value.trim(),
-              specialty: rSpec.value.trim(),
+              medical_id: document.getElementById("rMedical").value.trim(),
+              specialty: document.getElementById("rSpec").value.trim(),
             }),
           });
           const j = await r.json();
           if (!j.ok) {
-            errR.textContent = "⚠️ " + (j.error || "خطا در ثبت‌نام");
-            errR.style.display = "block";
+            document.getElementById("errR").textContent =
+              "⚠️ " + (j.error || "خطا در ثبت‌نام");
+            document.getElementById("errR").style.display = "block";
             return;
           }
-          saveAuth(j); // ✅ توکن ذخیره می‌شود
-          goTo(j.role); // ✅ هدایت به داشبورد
+          saveAuth(j);
+          goTo(j.role);
         } catch (err) {
-          errR.textContent = "⚠️ خطا در ارتباط با سرور!";
-          errR.style.display = "block";
+          document.getElementById("errR").textContent =
+            "⚠️ خطا در ارتباط با سرور!";
+          document.getElementById("errR").style.display = "block";
         }
       }
     </script>
