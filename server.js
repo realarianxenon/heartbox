@@ -1,5 +1,5 @@
 // ============================================================
-//  🏥 HeartBox — سرور کلینیک آنلاین (نسخه Railway با node:sqlite)
+//  🏥 HeartBox — سرور کلینیک آنلاین (نسخه Railway)
 // ============================================================
 
 const express = require('express');
@@ -12,18 +12,21 @@ const { DatabaseSync } = require('node:sqlite');
 const app = express();
 app.use(express.json());
 
+console.log('🚀 HeartBox در حال راه‌اندازی...');
+
 // ============================================================
 // 🗄 دیتابیس
 // ============================================================
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'clinic.db');
-let db;
+const DB_PATH = path.join(__dirname, 'clinic.db');
+console.log(`📁 مسیر دیتابیس: ${DB_PATH}`);
 
+let db;
 try {
   db = new DatabaseSync(DB_PATH);
-  console.log('✅ دیتابیس متصل شد:', DB_PATH);
+  console.log('✅ دیتابیس متصل شد');
 } catch (err) {
-  console.error('❌ خطا در اتصال به دیتابیس:', err);
+  console.error('❌ خطا در اتصال به دیتابیس:', err.message);
   process.exit(1);
 }
 
@@ -34,6 +37,7 @@ try {
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('✅ پوشه uploads ایجاد شد');
 }
 
 // ============================================================
@@ -151,7 +155,7 @@ CREATE TABLE IF NOT EXISTS meetings (
 `);
   console.log('✅ جدول‌ها ایجاد شدند');
 } catch (err) {
-  console.error('❌ خطا در ایجاد جدول‌ها:', err);
+  console.error('❌ خطا در ایجاد جدول‌ها:', err.message);
   process.exit(1);
 }
 
@@ -177,7 +181,7 @@ try {
     console.log('✅ داروهای نمونه اضافه شدند');
   }
 } catch (err) {
-  console.error('❌ خطا در اضافه کردن داروها:', err);
+  console.error('⚠️ خطا در اضافه کردن داروها:', err.message);
 }
 
 // ============================================================
@@ -214,7 +218,7 @@ function auth(req, res, next) {
     req.token = token;
     next();
   } catch (err) {
-    console.error('❌ خطا در auth:', err);
+    console.error('❌ خطا در auth:', err.message);
     return res.status(500).json({ ok: false, error: 'خطای سرور' });
   }
 }
@@ -289,7 +293,7 @@ app.post('/api/auth/login', (req, res) => {
     const token = createSession(user.id, user.role);
     res.json({ ok: true, token, role: user.role, name: user.full_name });
   } catch (err) {
-    console.error('❌ خطا در لاگین:', err);
+    console.error('❌ خطا در لاگین:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -299,7 +303,7 @@ app.post('/api/auth/logout', auth, (req, res) => {
     db.prepare('DELETE FROM sessions WHERE token=?').run(req.token);
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در خروج:', err);
+    console.error('❌ خطا در خروج:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -324,7 +328,7 @@ app.post('/api/auth/change-password', auth, (req, res) => {
     db.prepare('UPDATE users SET password=? WHERE id=?').run(hash(new_password), req.user.id);
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در تغییر رمز:', err);
+    console.error('❌ خطا در تغییر رمز:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -338,7 +342,7 @@ app.get('/api/profile', auth, (req, res) => {
     const profile = db.prepare('SELECT * FROM profiles WHERE user_id=?').get(req.user.id) || {};
     res.json({ ok: true, user: req.user, profile });
   } catch (err) {
-    console.error('❌ خطا در دریافت پروفایل:', err);
+    console.error('❌ خطا در دریافت پروفایل:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -361,7 +365,7 @@ app.put('/api/profile', auth, (req, res) => {
     const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
     res.json({ ok: true, user });
   } catch (err) {
-    console.error('❌ خطا در ذخیره پروفایل:', err);
+    console.error('❌ خطا در ذخیره پروفایل:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -375,7 +379,7 @@ app.get('/api/history', auth, (req, res) => {
     const history = db.prepare('SELECT * FROM history WHERE user_id=? ORDER BY id DESC').all(req.user.id);
     res.json({ ok: true, history });
   } catch (err) {
-    console.error('❌ خطا در دریافت تاریخچه:', err);
+    console.error('❌ خطا در دریافت تاریخچه:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -390,7 +394,7 @@ app.post('/api/history', auth, (req, res) => {
       .run(req.user.id, clean(disease), clean(diagnosed_at), clean(notes));
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در افزودن تاریخچه:', err);
+    console.error('❌ خطا در افزودن تاریخچه:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -400,7 +404,7 @@ app.delete('/api/history/:id', auth, (req, res) => {
     db.prepare('DELETE FROM history WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در حذف تاریخچه:', err);
+    console.error('❌ خطا در حذف تاریخچه:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -414,7 +418,7 @@ app.get('/api/medicines', auth, (req, res) => {
     const medicines = db.prepare('SELECT * FROM medicines ORDER BY id').all();
     res.json({ ok: true, medicines });
   } catch (err) {
-    console.error('❌ خطا در دریافت داروها:', err);
+    console.error('❌ خطا در دریافت داروها:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -445,7 +449,7 @@ app.post('/api/prescriptions', auth, upload.single('file'), (req, res) => {
       .run(req.user.id, req.file.filename, clean(req.body.note));
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در آپلود نسخه:', err);
+    console.error('❌ خطا در آپلود نسخه:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -455,7 +459,7 @@ app.get('/api/prescriptions', auth, (req, res) => {
     const prescriptions = db.prepare('SELECT * FROM prescriptions WHERE user_id=? ORDER BY id DESC').all(req.user.id);
     res.json({ ok: true, prescriptions });
   } catch (err) {
-    console.error('❌ خطا در دریافت نسخه‌ها:', err);
+    console.error('❌ خطا در دریافت نسخه‌ها:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -476,7 +480,7 @@ app.get('/api/prescriptions/:id/download', auth, (req, res) => {
 
     res.sendFile(filePath);
   } catch (err) {
-    console.error('❌ خطا در دانلود نسخه:', err);
+    console.error('❌ خطا در دانلود نسخه:', err.message);
     res.status(500).json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -490,7 +494,7 @@ app.get('/api/orders', auth, (req, res) => {
     const orders = db.prepare('SELECT * FROM orders WHERE user_id=? ORDER BY id DESC').all(req.user.id);
     res.json({ ok: true, orders });
   } catch (err) {
-    console.error('❌ خطا در دریافت سفارش‌ها:', err);
+    console.error('❌ خطا در دریافت سفارش‌ها:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -517,7 +521,7 @@ app.post('/api/orders', auth, (req, res) => {
 
     res.json({ ok: true, message: 'سفارش ثبت شد', total, order_id: Number(info.lastInsertRowid) });
   } catch (err) {
-    console.error('❌ خطا در ثبت سفارش:', err);
+    console.error('❌ خطا در ثبت سفارش:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -531,7 +535,7 @@ app.get('/api/my-appointments', auth, (req, res) => {
     const appointments = db.prepare('SELECT * FROM appointments WHERE user_id=? ORDER BY id DESC').all(req.user.id);
     res.json({ ok: true, appointments });
   } catch (err) {
-    console.error('❌ خطا در دریافت نوبت‌ها:', err);
+    console.error('❌ خطا در دریافت نوبت‌ها:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -554,7 +558,7 @@ app.post('/api/appointments', (req, res) => {
 
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در ثبت نوبت:', err);
+    console.error('❌ خطا در ثبت نوبت:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -568,7 +572,7 @@ app.get('/api/my-questions', auth, (req, res) => {
     const questions = db.prepare('SELECT * FROM questions WHERE user_id=? ORDER BY id DESC').all(req.user.id);
     res.json({ ok: true, questions });
   } catch (err) {
-    console.error('❌ خطا در دریافت سوالات:', err);
+    console.error('❌ خطا در دریافت سوالات:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -583,7 +587,7 @@ app.post('/api/questions', auth, (req, res) => {
       .run(req.user.id, clean(question));
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در ثبت سوال:', err);
+    console.error('❌ خطا در ثبت سوال:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -597,7 +601,7 @@ app.get('/api/meetings', (req, res) => {
     const meetings = db.prepare('SELECT * FROM meetings ORDER BY id DESC').all();
     res.json({ ok: true, meetings, count: meetings.length });
   } catch (err) {
-    console.error('❌ خطا در دریافت جلسات:', err);
+    console.error('❌ خطا در دریافت جلسات:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -609,7 +613,7 @@ app.post('/api/meetings', (req, res) => {
       .run(clean(doctor), clean(patient_email), clean(starts_at), parseInt(duration_min) || 30);
     res.json({ ok: true });
   } catch (err) {
-    console.error('❌ خطا در ثبت جلسه:', err);
+    console.error('❌ خطا در ثبت جلسه:', err.message);
     res.json({ ok: false, error: 'خطای سرور' });
   }
 });
@@ -618,6 +622,7 @@ app.post('/api/meetings', (req, res) => {
 // 🌐 استاتیک فایل‌ها
 // ============================================================
 
+// سرویس فایل‌های استاتیک از پوشه public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================================
@@ -643,7 +648,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-// اطمینان از اینکه سرور به درستی شروع شود
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('  ╔══════════════════════════════════════╗');
@@ -654,8 +658,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('');
 });
 
-// مدیریت خطاهای سرور
 server.on('error', (err) => {
-  console.error('❌ خطای سرور:', err);
+  console.error('❌ خطای سرور:', err.message);
   process.exit(1);
 });
