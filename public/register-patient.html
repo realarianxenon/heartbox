@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ثبت‌نام بیمار | هارت‌باکس</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Vazirmatn',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(-45deg,#c2ffd8,#a1c4fd,#fad0c4,#ff9a9e);background-size:400% 400%;
+  animation:bg 12s ease infinite;padding:20px}
+@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.card{width:min(430px,94vw);background:rgba(255,255,255,.93);backdrop-filter:blur(14px);
+  border-radius:32px;padding:36px 32px;box-shadow:0 20px 60px rgba(0,0,0,.15);
+  animation:pop .7s cubic-bezier(.68,-.55,.27,1.55) both}
+@keyframes pop{from{opacity:0;transform:translateY(50px) scale(.9)}to{opacity:1;transform:none}}
+.logo{text-align:center;font-size:1.5rem;font-weight:900;margin-bottom:6px}
+.logo span{color:#ff4757}
+.sub{text-align:center;color:#2e7d32;font-weight:800;margin-bottom:24px}
+input{padding:14px 17px;font-family:inherit;font-size:1rem;border:2px solid #eee;border-radius:15px;
+  outline:none;transition:.3s;width:100%;margin-bottom:12px}
+input:focus{border-color:#2ed573;box-shadow:0 0 0 5px rgba(46,213,115,.13)}
+.btn{padding:15px;width:100%;border:none;border-radius:15px;font-family:inherit;font-size:1.05rem;
+  font-weight:900;color:#fff;cursor:pointer;background:linear-gradient(135deg,#2ed573,#05c46b);transition:.3s}
+.btn:hover{transform:scale(1.03)}
+.err{display:none;background:#ffe3e6;color:#c0392b;font-weight:800;padding:12px;border-radius:13px;
+  text-align:center;margin-bottom:12px}
+.back{text-align:center;margin-top:18px}
+.back a{color:#888;text-decoration:none;font-weight:700}
+.back a:hover{color:#ff4757}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🩺 هارت<span>باکس</span></div>
+  <div class="sub">👤 ثبت‌نام بیمار</div>
+
+  <form onsubmit="doRegister(event)">
+    <input id="rName"  placeholder="👤 نام و نام خانوادگی" required>
+    <input id="rPhone" placeholder="📱 شماره موبایل (09...)" required>
+    <input id="rPass"  type="password" placeholder="🔑 رمز عبور (حداقل ۸ کاراکتر)" required>
+    <input id="rPass2" type="password" placeholder="🔁 تکرار رمز عبور" required>
+    <div class="err" id="errR"></div>
+    <button class="btn">ساخت حساب بیمار 🎉</button>
+  </form>
+
+  <div class="back"><a href="auth.html">← حساب دارید؟ وارد شوید</a></div>
+</div>
+
+<script>
+async function doRegister(e){
+  e.preventDefault();
+  errR.style.display='none';
+
+  if(rPass.value.length < 8){ errR.textContent='⚠️ رمز باید حداقل ۸ کاراکتر باشد!'; errR.style.display='block'; return; }
+  if(rPass.value !== rPass2.value){ errR.textContent='⚠️ دو رمز یکسان نیستند!'; errR.style.display='block'; return; }
+
+  const r = await fetch('/api/auth/register',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({full_name:rName.value.trim(), phone:rPhone.value.trim(),
+                          password:rPass.value})
+  });
+  const j = await r.json();
+  if(!j.ok){ errR.textContent='⚠️ '+j.error; errR.style.display='block'; return; }
+  alert('🎉 '+j.message);
+  location.href='dashboard.html';   // ✅ ثبت‌نام = ورود خودکار
+}
+</script>
+</body>
+</html>

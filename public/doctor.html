@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>پنل پزشک | هارت‌باکس</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Vazirmatn", sans-serif;
+        background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a1c4fd, #c2ffd8);
+        background-size: 400% 400%;
+        animation: bgMove 12s ease infinite;
+        overflow-x: hidden;
+      }
+      @keyframes bgMove {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      /* حباب‌ها */
+      .bub {
+        position: fixed;
+        bottom: -90px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.35);
+        animation: up 13s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+      }
+      @keyframes up {
+        to {
+          transform: translateY(-110vh);
+          opacity: 0;
+        }
+      }
+
+      /* نوبار */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 13px 5%;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      }
+      .btn-back {
+        padding: 9px 20px;
+        border: none;
+        border-radius: 40px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(135deg, #ff6b81, #ff4757);
+        transition: 0.3s;
+      }
+      .btn-back:hover {
+        transform: scale(1.08);
+      }
+
+      /* هیرو پنل */
+      .hero-panel {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 55px 20px 30px;
+      }
+      .avatar-big {
+        width: 130px;
+        height: 130px;
+        line-height: 130px;
+        margin: auto;
+        font-size: 4.3rem;
+        border-radius: 50%;
+        background: var(--c, #ff6b9d);
+        color: #fff;
+        box-shadow:
+          0 0 0 8px rgba(255, 255, 255, 0.6),
+          0 15px 35px rgba(0, 0, 0, 0.2);
+        animation: floatA 3.5s ease-in-out infinite;
+      }
+      @keyframes floatA {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      .hero-panel h1 {
+        margin-top: 16px;
+        font-weight: 900;
+        font-size: 1.9rem;
+      }
+      .spec {
+        color: #555;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+      .stars {
+        letter-spacing: 3px;
+        font-size: 1.25rem;
+        margin: 10px 0;
+      }
+      .badges {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .badge {
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 40px;
+        padding: 8px 20px;
+        font-weight: 800;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: 0.3s;
+      }
+      .badge:hover {
+        transform: translateY(-4px) rotate(2deg);
+      }
+
+      /* کارت‌های محتوا */
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: auto;
+        padding: 20px 5% 80px;
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+        align-items: start;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(10px);
+        border-radius: 26px;
+        padding: 28px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: 0.35s;
+        animation: popIn 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) both;
+      }
+      .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.15);
+      }
+      .card.wide {
+        grid-column: 1/-1;
+      }
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .card h2 {
+        font-size: 1.25rem;
+        font-weight: 900;
+        margin-bottom: 16px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+      .chip {
+        background: linear-gradient(135deg, #eef2ff, #dbeafe);
+        color: #3742fa;
+        padding: 7px 16px;
+        border-radius: 40px;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .edu-list {
+        list-style: none;
+      }
+      .edu-list li {
+        padding: 9px 4px;
+        border-bottom: 1px dashed #ddd;
+        font-weight: 500;
+      }
+      .edu-list li:last-child {
+        border: none;
+      }
+
+      /* جدول ساعت کاری */
+      table.hours {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      table.hours td {
+        padding: 11px 6px;
+        border-bottom: 1px dashed #ddd;
+        font-weight: 600;
+      }
+      table.hours tr:last-child td {
+        border: none;
+      }
+      table.hours td:first-child {
+        color: #777;
+      }
+
+      /* نظرات */
+      .review {
+        background: #fff;
+        border-radius: 18px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      .review b {
+        color: #333;
+      }
+      .review .r-stars {
+        color: #ffa502;
+        letter-spacing: 2px;
+        font-size: 0.9rem;
+      }
+
+      /* فرم‌ها */
+      .f-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      input,
+      select,
+      textarea {
+        padding: 13px 15px;
+        font-family: inherit;
+        font-size: 1rem;
+        border: 2px solid #eee;
+        border-radius: 15px;
+        outline: none;
+        transition: 0.3s;
+        width: 100%;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #ff4757;
+        box-shadow: 0 0 0 5px rgba(255, 71, 87, 0.14);
+        transform: scale(1.02);
+      }
+
+      .btn {
+        padding: 14px;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 1.02rem;
+        font-weight: 900;
+        color: #fff;
+        transition: 0.3s;
+      }
+      .btn:hover {
+        transform: scale(1.04);
+      }
+      .btn-green {
+        background: linear-gradient(135deg, #2ed573, #05c46b);
+        animation: pulseG 2s infinite;
+      }
+      .btn-blue {
+        background: linear-gradient(135deg, #1e90ff, #3742fa);
+      }
+      @keyframes pulseG {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 0 14px rgba(46, 213, 115, 0);
+        }
+      }
+
+      .msg-ok {
+        display: none;
+        margin-top: 12px;
+        text-align: center;
+        font-weight: 900;
+        background: #d1f2eb;
+        color: #0a6847;
+        padding: 13px;
+        border-radius: 14px;
+      }
+      .meet-item {
+        background: #f1f6ff;
+        border-radius: 14px;
+        padding: 11px 14px;
+        margin-top: 10px;
+        font-weight: 600;
+        border-right: 5px solid #1e90ff;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 22px;
+        color: #fff;
+        font-weight: 800;
+        background: linear-gradient(
+          90deg,
+          #ff4757,
+          #ffa502,
+          #2ed573,
+          #1e90ff,
+          #a55eea
+        );
+        background-size: 200%;
+        animation: bgMove 6s infinite;
+      }
+      .hint {
+        font-size: 0.85rem;
+        color: #888;
+        margin-top: 8px;
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+      }
+      .f-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      input,
+      textarea {
+        padding: 13px 15px;
+        font-family: inherit;
+        font-size: 1rem;
+        border: 2px solid #eee;
+        border-radius: 15px;
+        outline: none;
+        transition: 0.3s;
+        width: 100%;
+      }
+      input:focus,
+      textarea:focus {
+        border-color: #3742fa;
+        box-shadow: 0 0 0 4px rgba(55, 66, 250, 0.12);
+      }
+      .btn-g {
+        padding: 14px;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 900;
+        color: #fff;
+        background: linear-gradient(135deg, #2ed573, #05c46b);
+        transition: 0.3s;
+      }
+      .btn-g:hover {
+        transform: scale(1.03);
+      }
+      .msg-ok {
+        display: none;
+        margin-top: 12px;
+        text-align: center;
+        font-weight: 900;
+        background: #d1f2eb;
+        color: #0a6847;
+        padding: 12px;
+        border-radius: 14px;
+      }
+      .qa-item {
+        background: #fff;
+        border-radius: 18px;
+        padding: 15px 18px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        border-right: 6px solid #a55eea;
+      }
+      .qa-item p {
+        margin: 8px 0;
+        line-height: 1.9;
+      }
+      .qa-item .ans {
+        margin-top: 10px;
+        background: #eef6ff;
+        border-radius: 12px;
+        padding: 10px 14px;
+        line-height: 1.9;
+      }
+      .btn-ans,
+      .btn-del {
+        border: none;
+        border-radius: 12px;
+        padding: 9px 18px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 900;
+        transition: 0.25s;
+      }
+      .btn-ans {
+        background: #3742fa;
+        color: #fff;
+        margin-top: 8px;
+      }
+      .btn-del {
+        background: #ffe0e4;
+        color: #c0392b;
+        padding: 7px 14px;
+        font-size: 0.85rem;
+      }
+      .btn-ans:hover,
+      .btn-del:hover {
+        transform: scale(1.05);
+      }
+      .art-mini {
+        background: #fff;
+        border-radius: 16px;
+        padding: 13px 16px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+    </style>
+  </head>
+  <body>
+    <span class="bub" style="left: 10%; width: 38px; height: 38px"></span>
+    <span
+      class="bub"
+      style="left: 30%; width: 22px; height: 22px; animation-delay: 2s"
+    ></span>
+    <span
+      class="bub"
+      style="left: 55%; width: 48px; height: 48px; animation-delay: 4s"
+    ></span>
+    <span
+      class="bub"
+      style="left: 80%; width: 28px; height: 28px; animation-delay: 1s"
+    ></span>
+
+    <nav class="navbar">
+      <button class="btn-back" onclick="location.href = 'index.html'">
+        🏠 بازگشت به خانه
+      </button>
+      <div style="font-weight: 900">
+        🩺 هارت<span style="color: #ff4757">باکس</span>
+      </div>
+      <div style="font-weight: 700; color: #57606f" id="clock">🕐 --:--</div>
+    </nav>
+
+    <header class="hero-panel">
+      <div class="avatar-big" id="dAvatar">👩‍⚕️</div>
+      <h1 id="dName">—</h1>
+      <div class="spec" id="dSpec">—</div>
+      <div class="stars" id="dStars"></div>
+      <div class="badges" id="dBages"></div>
+    </header>
+
+    <div class="wrap">
+      <!-- درباره -->
+      <section class="card" style="--i: 0">
+        <h2>👤 درباره پزشک</h2>
+        <p id="dBio" style="line-height: 2; color: #444"></p>
+        <h2 style="margin-top: 20px">🎓 تحصیلات</h2>
+        <ul class="edu-list" id="dEdu"></ul>
+        <h2 style="margin-top: 20px">🏷️ خدمات</h2>
+        <div class="chips" id="dTags" style="margin-top: 10px"></div>
+      </section>
+
+      <!-- ساعت کاری -->
+      <section class="card" style="--i: 1">
+        <h2>🕘 ساعات کاری</h2>
+        <table class="hours">
+          <tbody id="dHours"></tbody>
+        </table>
+      </section>
+
+      <!-- نظرات -->
+      <section class="card" style="--i: 2">
+        <h2>💬 نظرات بیماران</h2>
+        <div id="dReviews"></div>
+      </section>
+
+      <!-- درخواست نوبت -->
+      <section class="card wide" style="--i: 3">
+        <h2>📅 درخواست ویزیت آنلاین</h2>
+        <form id="apptForm" class="f-row">
+          <input type="text" id="pName" placeholder="نام شما" required />
+          <input type="tel" id="pPhone" placeholder="شماره تماس" required />
+          <textarea
+            id="pNotes"
+            rows="2"
+            placeholder="شرح کوتاه مشکل..."
+          ></textarea>
+          <button class="btn btn-green" type="submit">
+            ارسال درخواست نوبت ✨
+          </button>
+        </form>
+        <div class="msg-ok" id="apptOk">
+          🎉 درخواست شما ثبت شد! منشی ما تماس می‌گیرد.
+        </div>
+        <!-- ❓ سوالات بیماران -->
+        <div class="card">
+          <h2>❓ سوالات بیماران</h2>
+          <div id="docQList"><div class="empty">در حال بارگذاری...</div></div>
+        </div>
+
+        <!-- 📝 مقالات من -->
+        <div class="card">
+          <h2>📝 نوشتن مقاله درمانی</h2>
+          <p style="color: #777">
+            مقالات شما پس از انتشار، در صفحه عمومی «📚 مقالات» سایت نمایش داده
+            می‌شود.
+          </p>
+          <br />
+          <div class="f-row">
+            <div style="display: flex; gap: 12px">
+              <input
+                id="aEmoji"
+                value="🩺"
+                style="max-width: 90px"
+                placeholder="ایموجی"
+              />
+              <input id="aTitle" placeholder="🏷️ عنوان مقاله" />
+            </div>
+            <textarea
+              id="aBody"
+              rows="6"
+              placeholder="✍️ متن کامل مقاله (حداقل ۵۰ حرف)..."
+            ></textarea>
+            <button class="btn-g" onclick="publishArticle()">
+              📢 انتشار مقاله
+            </button>
+          </div>
+          <div class="msg-ok" id="aOk">✅ مقاله منتشر شد!</div>
+          <h2 style="margin-top: 22px">📚 مقالات منتشرشده من</h2>
+          <div id="docArtList"></div>
+        </div>
+      </section>
+
+      <!-- 🔴 گوگل میت -->
+      <section class="card wide" style="--i: 4">
+        <h2>🎥 جلسه آنلاین با گوگل میت</h2>
+        <p style="color: #666; line-height: 1.9">
+          تاریخ و ساعت جلسه را انتخاب کنید؛ یک رویداد در
+          <b>تقویم گوگل</b> برایتان ساخته می‌شود (همراه لینک جلسه) و در لیست
+          پایین ذخیره می‌شود.
+        </p>
+        <br />
+        <div class="f-row">
+          <input type="date" id="mDate" required />
+          <input type="time" id="mTime" required />
+          <select id="mDur">
+            <option value="15">۱۵ دقیقه</option>
+            <option value="30" selected>۳۰ دقیقه</option>
+            <option value="45">۴۵ دقیقه</option>
+            <option value="60">۶۰ دقیقه</option>
+          </select>
+          <input
+            type="email"
+            id="mEmail"
+            placeholder="ایمیل شما برای دعوت (اختیاری)"
+          />
+          <button class="btn btn-blue" type="button" onclick="createMeet()">
+            📅 ساخت جلسه در تقویم گوگل
+          </button>
+          <button class="btn btn-green" type="button" onclick="quickMeet()">
+            ⚡ شروع سریع میت جدید همین حالا
+          </button>
+        </div>
+        <p class="hint">
+          💡 برای ساخت لینک میت باید در مرورگر با اکانت گوگل خود وارد شده باشید.
+        </p>
+        <div class="msg-ok" id="meetOk">
+          ✅ جلسه ساخته شد و در تقویم گوگل باز شد!
+        </div>
+        <h2 style="margin-top: 22px">📋 جلسات ثبت‌شده</h2>
+        <div id="meetList">
+          <span class="hint">هنوز جلسه‌ای ثبت نشده...</span>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">هارت‌باکس ۲۰۲۵ ❤️</footer>
+
+    <script>
+      /* ===== داده پزشکان ===== */
+      const DOCTORS = {
+        maryam: {
+          name: "دکتر مریم رضایی",
+          emoji: "👩‍⚕️",
+          color: "#ff6b9d",
+          spec: "متخصص قلب و عروق",
+          rating: 5,
+          bio: "دکتر مریم رضایی با بیش از ۱۴ سال تجربه در زمینه بیماری‌های قلبی، عضو انجمن قلب اروپا است. تمرکز او بر پیشگیری، درمان فشار خون و آریمی است.",
+          edu: [
+            "دکترای تخصصی قلب و عروق — دانشگاه تهران",
+            "فلووشیپ آنژیوگرافی — مونیخ، آلمان",
+            "دوره فوق‌تخصصی اکوکاردیوگرافی",
+          ],
+          tags: [
+            "اکوکاردیوگرافی",
+            "تست ورزش",
+            "کنترل فشار خون",
+            "مشاوره پیش از جراحی",
+          ],
+          hours: [
+            ["شنبه تا چهارشنبه", "۹ صبح تا ۵ عصر"],
+            ["پنجشنبه", "۹ صبح تا ۱ ظهر"],
+            ["جمعه", "تعطیل"],
+          ],
+          exp: "۱۴ سال سابقه",
+          patients: "+۳۲۰۰ بیمار",
+          price: "۴۵۰ هزار تومان",
+          reviews: [
+            {
+              n: "آقای کریمی",
+              t: "خیلی صبور و دقیق بود، فشارم کاملاً تنظیم شد.",
+              s: 5,
+            },
+            {
+              n: "خانم موسوی",
+              t: "بهترین کاردیولوژیستی که تا حالا رفتم. توصیه می‌کنم!",
+              s: 5,
+            },
+          ],
+        },
+
+        ali: {
+          name: "دکتر علی محمدی",
+          emoji: "👨‍⚕️",
+          color: "#54a0ff",
+          spec: "متخصص مغز و اعصاب",
+          rating: 5,
+          bio: "دکتر علی محمدی متخصص تشخیص و درمان سردردهای مزمن، صرع و اختلالات خواب است و رویکردی ترکیبی از دارودرمانی و سبک زندگی دارد.",
+          edu: [
+            "دکترای تخصصی مغز و اعصاب — دانشگاه شهید بهشتی",
+            "فلوشیپ EEG و صرع — وین، اتریش",
+          ],
+          tags: ["سردرد و میگرن", "EEG", "اختلالات خواب", "سرگیجه"],
+          hours: [
+            ["شنبه، دوشنبه، سه‌شنبه", "۱۰ صبح تا ۶ عصر"],
+            ["چهارشنبه", "تلویزیون ویزیت آنلاین"],
+            ["پنجشنبه و جمعه", "تعطیل"],
+          ],
+          exp: "۱۱ سال سابقه",
+          patients: "+۲۵۰۰ بیمار",
+          price: "۵۰۰ هزار تومان",
+          reviews: [
+            {
+              n: "آقای رحیمی",
+              t: "میگرن ۱۰ ساله‌ام بالاخره کنترل شد. دستش درد نکند.",
+              s: 5,
+            },
+            {
+              n: "خانم احمدی",
+              t: "برخورد بسیار محترمانه و توضیحات کامل.",
+              s: 5,
+            },
+          ],
+        },
+
+        sara: {
+          name: "دکتر سارا کریمی",
+          emoji: "🧑‍⚕️",
+          color: "#00d2a8",
+          spec: "پزشک عمومی",
+          rating: 4,
+          bio: "دکتر سارا کریمی با رویکرد پزشکی خانواده، اولین نقطه تماس شما برای چکاپ سالانه، بیماری‌های رایج و مشاوره تغذیه است.",
+          edu: [
+            "دکترای عمومی پزشکی — دانشگاه علوم پزشکی ایران",
+            "دوره معتبر CPR و طب اورژانس",
+          ],
+          tags: [
+            "چکاپ کامل",
+            "ویزیت سرماخوردگی",
+            "مشاوره تغذیه",
+            "واکسیناسیون",
+          ],
+          hours: [["هر روز", "۸ صبح تا ۸ شب (آنلاین)"]],
+          exp: "۷ سال سابقه",
+          patients: "+۵۰۰۰ بیمار",
+          price: "۲۰۰ هزار تومان",
+          reviews: [
+            {
+              n: "آقای نوری",
+              t: "سریع و دقیق جواب داد، نسخه آنلاین عالی بود.",
+              s: 4,
+            },
+            {
+              n: "خانم صادقی",
+              t: "برای بچه‌ها هم خیلی خوب و مهربان است.",
+              s: 4,
+            },
+          ],
+        },
+
+        hossein: {
+          name: "دکتر حسین احمدی",
+          emoji: "👨‍⚕️",
+          color: "#feca57",
+          spec: "متخصص اطفال",
+          rating: 5,
+          bio: "دکتر حسین احمدی عاشق بچه‌هاست! متخصص رشد و تکامل کودک، واکسیناسیون و بیماری‌های شایع کودکان از نوزادی تا نوجوانی.",
+          edu: ["دکترای تخصصی اطفال — دانشگاه تهران", "فلوشیپ نوزادان (NICU)"],
+          tags: ["پایش رشد کودک", "واکسیناسیون", "زردی نوزاد", "آسم کودکان"],
+          hours: [
+            ["شنبه تا پنجشنبه", "۹ صبح تا ۲ ظهر و ۵ تا ۸ شب"],
+            ["جمعه", "اورژانسی"],
+          ],
+          exp: "۱۸ سال سابقه",
+          patients: "+۴۱۰۰ بیمار",
+          price: "۳۵۰ هزار تومان",
+          reviews: [
+            {
+              n: "مادر آرمین",
+              t: "آرمین از دکتر نمی‌ترسید! واقعاً هنرمند است.",
+              s: 5,
+            },
+            {
+              n: "پدر نگین",
+              t: "توضیحاتش برای والدین خیلی قابل فهم بود.",
+              s: 5,
+            },
+          ],
+        },
+      };
+
+      /* ===== نمایش پنل بر اساس ?doc= ===== */
+      const doc =
+        DOCTORS[new URLSearchParams(location.search).get("doc")] ||
+        DOCTORS.maryam;
+
+      document.title = doc.name + " | هارت‌باکس";
+      const av = document.getElementById("dAvatar");
+      av.textContent = doc.emoji;
+      av.style.setProperty("--c", doc.color);
+      document.getElementById("dName").textContent = doc.name;
+      document.getElementById("dSpec").textContent = doc.spec;
+      document.getElementById("dStars").textContent =
+        "⭐".repeat(doc.rating) + "✩".repeat(5 - doc.rating);
+      document.getElementById("dBio").textContent = doc.bio;
+      document.getElementById("dBages").innerHTML =
+        `<span class="badge">💼 ${doc.exp}</span><span class="badge">👥 ${doc.patients}</span><span class="badge">💰 ${doc.price}</span>`;
+      document.getElementById("dEdu").innerHTML = doc.edu
+        .map((e) => `<li>🎓 ${e}</li>`)
+        .join("");
+      document.getElementById("dTags").innerHTML = doc.tags
+        .map((t) => `<span class="chip">${t}</span>`)
+        .join("");
+      document.getElementById("dHours").innerHTML = doc.hours
+        .map((h) => `<tr><td>${h[0]}</td><td>${h[1]}</td></tr>`)
+        .join("");
+      document.getElementById("dReviews").innerHTML = doc.reviews
+        .map(
+          (r) =>
+            `<div class="review"><b>${r.n}</b> <span class="r-stars">${"⭐".repeat(r.s)}</span><p>${r.t}</p></div>`,
+        )
+        .join("");
+
+      /* ===== ساعت زنده ===== */
+      setInterval(() => {
+        document.getElementById("clock").textContent =
+          "🕐 " + new Date().toLocaleTimeString("fa-IR");
+      }, 1000);
+
+      /* ===== کانفتی ===== */
+      function confetti() {
+        const colors = ["#ff4757", "#ffa502", "#2ed573", "#1e90ff", "#a55eea"];
+        for (let i = 0; i < 35; i++) {
+          const p = document.createElement("div");
+          p.style.cssText = `position:fixed;z-index:999;width:12px;height:12px;top:-15px;left:${Math.random() * 100}vw;background:${colors[i % 5]};border-radius:${Math.random() > 0.5 ? "50%" : "3px"};pointer-events:none;transition:transform 3s linear,opacity 3s;`;
+          document.body.appendChild(p);
+          requestAnimationFrame(() => {
+            p.style.transform = `translateY(${innerHeight + 50}px) rotate(${Math.random() * 720}deg)`;
+            p.style.opacity = 0;
+          });
+          setTimeout(() => p.remove(), 3200);
+        }
+      }
+
+      /* ===== ارسال درخواست نوبت ===== */
+      document
+        .getElementById("apptForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const body = {
+            patient_name: pName.value,
+            phone: pPhone.value,
+            doctor: doc.name,
+            time_slot: "آنلاین",
+            notes: pNotes.value,
+          };
+          try {
+            await fetch("/api/appointments", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            apptOk.style.display = "block";
+            e.target.reset();
+            confetti();
+            setTimeout(() => (apptOk.style.display = "none"), 5000);
+          } catch (err) {
+            alert("⚠️ سرور (app.py) اجرا نیست!");
+          }
+        });
+
+      /* ===== 🔴 گوگل میت ===== */
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+      function utc(d) {
+        return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+      }
+
+      async function createMeet() {
+        const date = mDate.value,
+          time = mTime.value;
+        if (!date || !time) {
+          alert("⚠️ تاریخ و ساعت جلسه را انتخاب کنید!");
+          return;
+        }
+
+        const start = new Date(date + "T" + time);
+        const dur = parseInt(mDur.value);
+        const end = new Date(start.getTime() + dur * 60000);
+        const title = "ویزیت آنلاین " + doc.name + " — هارت‌باکس";
+        const meetLink = "https://meet.google.com/new";
+        const details = `جلسه ویزیت آنلاین در هارت‌باکس ❤️\nلینک جلسه: ${meetLink}`;
+
+        /* ساخت رویداد در تقویم گوگل (بدون نیاز به کدنویسی API) */
+        let url =
+          `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+          `&text=${encodeURIComponent(title)}` +
+          `&dates=${utc(start)}/${utc(end)}` +
+          `&details=${encodeURIComponent(details)}` +
+          `&location=${encodeURIComponent(meetLink)}`;
+        if (mEmail.value.trim())
+          url += "&add=" + encodeURIComponent(mEmail.value.trim());
+        window.open(url, "_blank");
+
+        /* ذخیره در سرور */
+        try {
+          await fetch("/api/meetings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              doctor: doc.name,
+              patient_email: mEmail.value.trim(),
+              starts_at: `${date}T${time}`,
+              duration_min: dur,
+            }),
+          });
+          loadMeetings();
+        } catch (e) {}
+        meetOk.style.display = "block";
+        confetti();
+        setTimeout(() => (meetOk.style.display = "none"), 5000);
+      }
+
+      function quickMeet() {
+        /* ساخت فوری یک اتاق جدید میت (نیاز به لاگین گوگل) */
+        window.open("https://meet.google.com/new", "_blank");
+      }
+
+      /* ===== لیست جلسات ثبت‌شده ===== */
+      async function loadMeetings() {
+        try {
+          const r = await fetch("/api/meetings");
+          const j = await r.json();
+          const box = document.getElementById("meetList");
+          if (!j.count) {
+            box.innerHTML =
+              '<span class="hint">هنوز جلسه‌ای ثبت نشده...</span>';
+            return;
+          }
+          box.innerHTML =
+            j.meetings
+              .filter((m) => m.doctor === doc.name)
+              .map(
+                (m) =>
+                  `<div class="meet-item">🎥 ${m.doctor} — ${m.starts_at.replace("T", " ساعت ")} (${m.duration_min} دقیقه)</div>`,
+              )
+              .join("") || '<span class="hint">هنوز جلسه‌ای ثبت نشده...</span>';
+        } catch (e) {}
+      }
+      loadMeetings();
+      
+    </script>
+  </body>
+</html>
