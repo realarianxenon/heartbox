@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>نتیجه پرداخت | هارت‌باکس</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Vazirmatn',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(-45deg,#ff9a9e,#fad0c4,#a1c4fd,#c2ffd8);background-size:400% 400%;
+  animation:bg 12s ease infinite;padding:20px}
+@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.card{width:min(420px,94vw);background:rgba(255,255,255,.95);border-radius:32px;padding:44px 34px;
+  text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:pop .6s cubic-bezier(.68,-.55,.27,1.55) both}
+@keyframes pop{from{opacity:0;transform:translateY(40px) scale(.9)}to{opacity:1;transform:none}}
+.icon{font-size:4rem;animation:bounceIn .8s ease both}
+@keyframes bounceIn{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+h1{font-size:1.5rem;font-weight:900;margin:16px 0 8px}
+.ok h1{color:#0a6847}.fail h1{color:#c0392b}
+p{color:#666;line-height:2}
+.ref{background:#f4f6fb;border-radius:14px;padding:12px;margin-top:16px;font-weight:800}
+.hidden{display:none}
+.btn{display:inline-block;margin-top:24px;padding:13px 36px;border-radius:40px;text-decoration:none;
+  font-weight:900;color:#fff;background:linear-gradient(135deg,#1e90ff,#3742fa);transition:.3s}
+.btn:hover{transform:scale(1.06)}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="icon" id="ic">⏳</div>
+  <h1 id="ttl">در حال بررسی...</h1>
+  <p id="msg"></p>
+  <div class="ref hidden" id="refBox"></div>
+  <a class="btn" href="dashboard.html">بازگشت به پنل من 🧑‍💻</a>
+</div>
+
+<script>
+const p = new URLSearchParams(location.search);
+
+if (p.get('status') === 'ok') {
+  // ✅ پرداخت موفق
+  document.body.querySelector('.card').classList.add('ok');
+  ic.textContent   = '🎉';
+  ttl.textContent  = 'پرداخت با موفقیت انجام شد!';
+  msg.textContent  = 'سفارش شما ثبت شد و به‌زودی پردازش می‌شود.';
+  refBox.textContent = '🧾 کد پیگیری: ' + (p.get('ref') || '—') +
+                       '  |  شماره سفارش: #' + (p.get('order') || '—');
+  refBox.classList.remove('hidden');
+} else {
+  // ❌ پرداخت ناموفق یا لغو شده
+  document.body.querySelector('.card').classList.add('fail');
+  ic.textContent   = '😕';
+  ttl.textContent  = 'پرداخت ناموفق بود';
+  msg.textContent  = 'مبلغی از حساب شما کم نشده است. می‌توانید دوباره تلاش کنید.';
+  refBox.textContent = 'سفارش #' + (p.get('order') || '—') + ' همچنان در انتظار پرداخت است.';
+  refBox.classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
