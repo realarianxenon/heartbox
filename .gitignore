@@ -1,1 +1,5 @@
-
+echo "node_modules/" > .gitignore
+echo "uploads/" >> .gitignore
+echo "heartbox.db" >> .gitignore
+echo ".env" >> .gitignore
+echo ".DS_Store" >> .gitignore
