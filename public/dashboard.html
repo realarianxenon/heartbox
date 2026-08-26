@@ -872,7 +872,7 @@
         </button>
         <!-- 🆕 -->
         <button id="tb-appts" onclick="switchTab('appts')">نوبت های من</button>
-        <button id="tb-faq" onclick="switchTab('faq')">❓ سوال پزشکی</button> 
+        <button id="tb-faq" onclick="switchTab('faq')">❓ سوال پزشکی</button>
         <section class="panel" id="pn-appts">
           <div class="card">
             <h2>📅 نوبت‌های من</h2>
@@ -1073,16 +1073,18 @@
       <button class="lb-close">✖</button>
       <img id="lbImg" alt="نسخه پزشک" />
     </div>
-
     <script>
       /* ============================================================
    🩺 هارت‌باکس — اسکریپت پنل کاربر (نسخه امن ضد XSS)
    ============================================================ */
 
-      let USER = null,
-        CART = [];
+      // 🔑 توکن را از localStorage می‌خوانیم
+      const TOKEN = localStorage.getItem("token");
+      if (!TOKEN) {
+        location.href = "auth.html";
+      }
 
-      // 🛡️ ضد XSS — هر متنی که از سرور/کاربر می‌آید قبل از نمایش escape می‌شود
+      // 🛡️ ضد XSS
       const esc = (s) =>
         String(s ?? "").replace(
           /[&<>"']/g,
@@ -1098,55 +1100,115 @@
 
       const fa = (n) => Number(n || 0).toLocaleString("fa-IR");
 
-      /* ---------- 🔐 محافظت: اگر لاگین نیست برگرده به auth ---------- */
-      (async () => {
+      // 📅 تبدیل تاریخ میلادی به شمسی
+      function faDate(iso) {
         try {
-          const r = await fetch("/api/auth/me");
-          if (!r.ok) {
+          if (!iso) return "";
+          const [y, m, d] = iso.split("-").map(Number);
+          return new Intl.DateTimeFormat("fa-IR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          }).format(new Date(y, m - 1, d));
+        } catch (e) {
+          return iso || "";
+        }
+      }
+
+      // 🔐 تابع کمکی برای fetch با توکن
+      function fetchWithAuth(url, options = {}) {
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...(options.headers || {}),
+            Authorization: "Bearer " + TOKEN,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      let USER = null,
+        CART = [];
+      let ALL_MEDS = [];
+
+      // ---------- 👤 بارگذاری پروفایل ----------
+      async function loadProfile() {
+        try {
+          const r = await fetchWithAuth("/api/profile");
+          if (r.status === 401) {
+            localStorage.removeItem("token");
             location.href = "auth.html";
             return;
           }
-          USER = (await r.json()).user;
+          const j = await r.json();
+          if (!j.ok) return;
+
+          USER = j.user;
           renderUser();
         } catch (e) {
-          location.href = "auth.html";
+          console.error("خطا در بارگذاری پروفایل:", e);
         }
-        loadMyQuestions(); // 🆕
-      })();
+      }
 
-      /* ---------- 👤 نمایش اطلاعات کاربر ---------- */
+      // ---------- 👤 نمایش اطلاعات کاربر ----------
       function renderUser() {
-        helloName.textContent = "👋 " + USER.full_name;
-        avatarXL.textContent = USER.full_name[0];
-        welcomeTitle.textContent = USER.full_name + " عزیز، خوش برگشتید!";
-        joinDate.textContent = "🗓️ عضو هارت‌باکس از " + (USER.created_at || "");
-        piName.textContent = USER.full_name;
-        piPhone.textContent = USER.phone;
-        piJoin.textContent = USER.created_at || "—";
-        pfAge.value = USER.age || "";
-        pfBlood.value = USER.blood_type || "";
+        if (!USER) return;
+
+        document.getElementById("helloName").textContent =
+          "👋 " + USER.full_name;
+        document.getElementById("avatarXL").textContent =
+          (USER.full_name || "👤")[0] || "👤";
+        document.getElementById("welcomeTitle").textContent =
+          USER.full_name + " عزیز، خوش برگشتید!";
+        document.getElementById("joinDate").textContent =
+          "🗓️ عضو هارت‌باکس از " + (USER.created_at || "");
+        document.getElementById("piName").textContent = USER.full_name;
+        document.getElementById("piPhone").textContent = USER.phone;
+        document.getElementById("piJoin").textContent = USER.created_at || "—";
+
+        // بارگذاری اطلاعات پروفایل
+        fetchWithAuth("/api/profile")
+          .then((r) => r.json())
+          .then((j) => {
+            if (j.profile) {
+              document.getElementById("pfAge").value = j.profile.age || "";
+              document.getElementById("pfBlood").value = j.profile.blood || "";
+            }
+          })
+          .catch(console.error);
+
+        // نشان نقش
+        const rb = document.getElementById("roleBadge");
+        const ROLES = {
+          patient: ["rb-patient", "👤 بیمار"],
+          doctor: ["rb-doctor", "🩺 پزشک"],
+          pharmacist: ["rb-pharmacist", "💊 داروساز"],
+          admin: ["rb-admin", "👑 مدیر"],
+        };
+        const [cls, txt] = ROLES[USER.role] || ROLES.patient;
+        rb.className = "role-badge " + cls;
+        rb.textContent = txt;
+        rb.classList.remove("hidden");
+
         loadHistory();
         loadShop();
         loadRx();
         loadOrders();
-        loadHistory();
-        loadShop();
-        loadRx();
-        loadOrders();
-        loadMyAppointments(); // ← 🆕
+        loadMyAppointments();
+        loadMyQuestions();
       }
 
       function logout() {
-        fetch("/api/auth/logout", { method: "POST" }).then(
-          () => (location.href = "index.html"),
-        );
+        fetchWithAuth("/api/auth/logout", { method: "POST" }).finally(() => {
+          localStorage.removeItem("token");
+          location.href = "index.html";
+        });
       }
 
-      /* ---------- 🗂️ تب‌ها ---------- */
+      // ---------- 🗂️ تب‌ها ----------
       function switchTab(t) {
-        ["profile", "history", "shop", "rx", "orders", "appts", "faq" , "nobat"].forEach(
+        ["profile", "history", "shop", "rx", "orders", "appts", "faq"].forEach(
           (x) => {
-            // ← appts اضافه شد
             document
               .getElementById("pn-" + x)
               .classList.toggle("show", x === t);
@@ -1155,25 +1217,57 @@
         );
       }
 
-      /* ---------- ✏️ پروفایل ---------- */
+      // ---------- ✏️ پروفایل ----------
       async function saveProfile() {
-        const r = await fetch("/api/profile", {
+        const r = await fetchWithAuth("/api/profile", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ age: pfAge.value, blood_type: pfBlood.value }),
+          body: JSON.stringify({
+            age: document.getElementById("pfAge").value,
+            blood_type: document.getElementById("pfBlood").value,
+          }),
         });
         const j = await r.json();
         if (j.user) USER = j.user;
-        pfOk.style.display = "block";
-        setTimeout(() => (pfOk.style.display = "none"), 3500);
+        document.getElementById("pfOk").style.display = "block";
+        setTimeout(
+          () => (document.getElementById("pfOk").style.display = "none"),
+          3500,
+        );
       }
 
-      /* ---------- 📋 تاریخچه بیماری ---------- */
-      async function loadHistory() {
-        const j = await (await fetch("/api/history")).json();
-        qcHist.textContent = fa(j.history.length);
+      // ---------- 🔑 تغییر رمز ----------
+      async function changePassword() {
+        const cur = document.getElementById("pwCur").value;
+        const nw = document.getElementById("pwNew").value;
+        const nw2 = document.getElementById("pwNew2").value;
 
-        histList.innerHTML = j.history.length
+        if (!cur || !nw || !nw2) return alert("⚠️ همه فیلدها را پر کنید!");
+        if (nw !== nw2) return alert("⚠️ رمز جدید و تکرارش یکسان نیستند!");
+
+        const r = await fetchWithAuth("/api/auth/change-password", {
+          method: "POST",
+          body: JSON.stringify({ current_password: cur, new_password: nw }),
+        });
+        const j = await r.json();
+        if (!j.ok) return alert("⚠️ " + j.error);
+
+        document.getElementById("pwOk").style.display = "block";
+        setTimeout(
+          () => (document.getElementById("pwOk").style.display = "none"),
+          4000,
+        );
+        document.getElementById("pwCur").value = "";
+        document.getElementById("pwNew").value = "";
+        document.getElementById("pwNew2").value = "";
+      }
+
+      // ---------- 📋 تاریخچه ----------
+      async function loadHistory() {
+        const r = await fetchWithAuth("/api/history");
+        const j = await r.json();
+        document.getElementById("qcHist").textContent = fa(j.history.length);
+
+        document.getElementById("histList").innerHTML = j.history.length
           ? j.history
               .map(
                 (h) => `
@@ -1187,28 +1281,33 @@
       }
 
       async function addHistory() {
-        if (!hDisease.value.trim()) return alert("⚠️ نام بیماری را وارد کنید");
-        await fetch("/api/history", {
+        if (!document.getElementById("hDisease").value.trim())
+          return alert("⚠️ نام بیماری را وارد کنید");
+        await fetchWithAuth("/api/history", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            disease: hDisease.value,
-            diagnosed_at: hDate.value,
-            notes: hNotes.value,
+            disease: document.getElementById("hDisease").value,
+            diagnosed_at: document.getElementById("hDate").value,
+            notes: document.getElementById("hNotes").value,
           }),
         });
-        hDisease.value = hDate.value = hNotes.value = "";
-        hOk.style.display = "block";
-        setTimeout(() => (hOk.style.display = "none"), 3000);
+        document.getElementById("hDisease").value = "";
+        document.getElementById("hDate").value = "";
+        document.getElementById("hNotes").value = "";
+        document.getElementById("hOk").style.display = "block";
+        setTimeout(
+          () => (document.getElementById("hOk").style.display = "none"),
+          3000,
+        );
         loadHistory();
       }
 
       async function delHistory(id) {
-        await fetch("/api/history/" + id, { method: "DELETE" });
+        await fetchWithAuth("/api/history/" + id, { method: "DELETE" });
         loadHistory();
       }
 
-      /* ---------- 🛒 داروخانه ---------- */
+      // ---------- 🛒 داروخانه ----------
       const GRADS = [
         "#ff6b81",
         "#54a0ff",
@@ -1218,13 +1317,11 @@
         "#ff7f50",
       ];
 
-      let ALL_MEDS = []; // 🆕 کش همه داروها برای فیلتر زنده
-
       async function loadShop() {
-        const j = await (await fetch("/api/medicines")).json();
+        const r = await fetchWithAuth("/api/medicines");
+        const j = await r.json();
         ALL_MEDS = j.medicines;
 
-        // 🆕 پر کردن یک‌باره منوی دسته‌ها از روی داده واقعی
         const catSel = document.getElementById("medCat");
         if (catSel && catSel.options.length <= 1) {
           [...new Set(ALL_MEDS.map((m) => m.category))].forEach((c) => {
@@ -1237,11 +1334,12 @@
         renderShop();
       }
 
-      // 🔍 رندر لیست با اعمال جستجو + فیلتر + مرتب‌سازی
       function renderShop() {
-        const q = (medSearch.value || "").trim().toLowerCase();
-        const cat = medCat.value || "";
-        const sor = medSort.value || "";
+        const q = (document.getElementById("medSearch").value || "")
+          .trim()
+          .toLowerCase();
+        const cat = document.getElementById("medCat").value || "";
+        const sor = document.getElementById("medSort").value || "";
 
         let list = ALL_MEDS.filter((m) => {
           const okQ =
@@ -1255,9 +1353,10 @@
         if (sor === "cheap") list.sort((a, b) => a.price - b.price);
         if (sor === "exp") list.sort((a, b) => b.price - a.price);
 
-        shopCount.textContent = `نمایش ${fa(list.length)} از ${fa(ALL_MEDS.length)} دارو`;
+        document.getElementById("shopCount").textContent =
+          `نمایش ${fa(list.length)} از ${fa(ALL_MEDS.length)} دارو`;
 
-        shopGrid.innerHTML = list.length
+        document.getElementById("shopGrid").innerHTML = list.length
           ? list
               .map(
                 (m, i) => `
@@ -1276,7 +1375,7 @@
     </div>`,
               )
               .join("")
-          : '<div class="no-result">😕 دارویی مطابق جستجوی شما پیدا نشد!<br><small>عبارت دیگری امتحان کنید</small></div>';
+          : '<div class="no-result">😕 دارویی مطابق جستجوی شما پیدا نشد!</div>';
       }
 
       function chQty(id, d) {
@@ -1305,14 +1404,17 @@
       }
 
       function renderCart() {
-        cartBar.classList.toggle("show", CART.length > 0);
+        document
+          .getElementById("cartBar")
+          .classList.toggle("show", CART.length > 0);
         if (!CART.length) return;
 
         const sum = CART.reduce((s, i) => s + i.total, 0);
-        cartChips.innerHTML = CART.map(
+        document.getElementById("cartChips").innerHTML = CART.map(
           (i) => `<span class="chip-x">${esc(i.name)} ×${fa(i.qty)}</span>`,
         ).join("");
-        cartTotal.textContent = "💰 " + fa(sum) + " تومان";
+        document.getElementById("cartTotal").textContent =
+          "💰 " + fa(sum) + " تومان";
       }
 
       function clearCart() {
@@ -1321,9 +1423,8 @@
       }
 
       async function checkout() {
-        const r = await fetch("/api/orders", {
+        const r = await fetchWithAuth("/api/orders", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             items: CART.map(({ medicine_id, qty }) => ({ medicine_id, qty })),
           }),
@@ -1335,179 +1436,80 @@
         loadOrders();
       }
 
-      /* ---------- 📄 نسخه پزشک ---------- */
+      // ---------- 📄 نسخه ----------
       async function uploadRx() {
-        if (!rxFile.files[0]) return alert("⚠️ اول فایل نسخه را انتخاب کنید!");
+        const fileInput = document.getElementById("rxFile");
+        if (!fileInput.files[0])
+          return alert("⚠️ اول فایل نسخه را انتخاب کنید!");
 
         const fd = new FormData();
-        fd.append("file", rxFile.files[0]);
-        fd.append("note", rxNote.value);
+        fd.append("file", fileInput.files[0]);
+        fd.append("note", document.getElementById("rxNote").value);
 
         const r = await fetch("/api/prescriptions", {
           method: "POST",
+          headers: { Authorization: "Bearer " + TOKEN },
           body: fd,
         });
         const j = await r.json();
         if (!j.ok) return alert("⚠️ " + j.error);
 
-        rxOk.style.display = "block";
-        setTimeout(() => (rxOk.style.display = "none"), 3500);
-        rxFile.value = "";
-        rxNote.value = "";
-        rxPreviewBox.innerHTML = ""; // 🖼️ حذف پیش‌نمایش
+        document.getElementById("rxOk").style.display = "block";
+        setTimeout(
+          () => (document.getElementById("rxOk").style.display = "none"),
+          3500,
+        );
+        fileInput.value = "";
+        document.getElementById("rxNote").value = "";
+        document.getElementById("rxPreviewBox").innerHTML = "";
         loadRx();
       }
 
       async function loadRx() {
-        const j = await (await fetch("/api/prescriptions")).json();
-        qcRx.textContent = fa(j.prescriptions.length);
+        const r = await fetchWithAuth("/api/prescriptions");
+        const j = await r.json();
+        document.getElementById("qcRx").textContent = fa(
+          j.prescriptions.length,
+        );
 
-        rxList.innerHTML = j.prescriptions.length
+        document.getElementById("rxList").innerHTML = j.prescriptions.length
           ? j.prescriptions
-              .map((p) => {
-                const isImg = /\.(png|jpe?g|webp)$/i.test(p.filename || "");
-                // عکس → لایت‌باکس | PDF → تب جدید مرورگر
-                const viewBtn = isImg
-                  ? `<a class="btn-view" onclick="openLightbox('/api/prescriptions/${p.id}/download?inline=1')">👁️ مشاهده</a>`
-                  : `<a class="btn-view" href="/api/prescriptions/${p.id}/download?inline=1" target="_blank">👁️ مشاهده</a>`;
-
-                return `
+              .map(
+                (p) => `
     <div class="rx-item">
       <div><b>📄 نسخه پزشک</b><small>🕐 ${esc(p.uploaded_at)}${p.note ? " — " + esc(p.note) : ""}</small></div>
       <div style="white-space:nowrap">
-        ${viewBtn}
-        <a class="dl" href="/api/prescriptions/${p.id}/download">دانلود ⬇️</a>
+        <a class="dl" href="/api/prescriptions/${p.id}/download?token=${TOKEN}">دانلود ⬇️</a>
       </div>
-    </div>`;
-              })
+    </div>`,
+              )
               .join("")
           : '<div class="empty">هنوز نسخه‌ای آپلود نشده 📭</div>';
       }
 
-      /* ---------- 🧾 سفارش‌ها ---------- */
+      // ---------- 🧾 سفارش‌ها ----------
       async function loadOrders() {
-        const j = await (await fetch("/api/orders")).json();
-        qcOrd.textContent = fa(j.orders.length);
+        const r = await fetchWithAuth("/api/orders");
+        const j = await r.json();
+        document.getElementById("qcOrd").textContent = fa(j.orders.length);
 
-        ordList.innerHTML = j.orders.length
+        document.getElementById("ordList").innerHTML = j.orders.length
           ? j.orders
               .map(
                 (o) => `
     <div class="order-item">
       <span class="status-chip">${esc(o.status)}</span>
       <b>🧾 سفارش #${o.id}</b><br>
-      <small>💊 ${o.items_pretty.map(esc).join(" • ")}</small><br>
+      <small>💊 ${o.items ? JSON.parse(o.items).map(esc).join(" • ") : ""}</small><br>
       <small>🕐 ${esc(o.created_at)}</small>
       <div style="margin-top:8px;font-weight:900;color:#05c46b;">💰 ${fa(o.total)} تومان</div>
-      ${
-        o.status === "در حال آماده‌سازی"
-          ? `
-        <button class="btn-pay" onclick="startPay(${o.id})">💳 پرداخت آنلاین</button>`
-          : ""
-      }
-      ${o.status === "پرداخت شد ✅" ? `<small style="color:#05c46b;font-weight:800">✅ پرداخت شده</small>` : ""}
     </div>`,
               )
               .join("")
           : '<div class="empty">هنوز سفارشی نداشته‌اید 🛒</div>';
       }
-      /* ---------- 🔑 تغییر رمز عبور ---------- */
-      async function changePassword() {
-        const cur = pwCur.value,
-          nw = pwNew.value,
-          nw2 = pwNew2.value;
 
-        if (!cur || !nw || !nw2) return alert("⚠️ همه فیلدها را پر کنید!");
-        if (nw !== nw2) return alert("⚠️ رمز جدید و تکرارش یکسان نیستند!");
-
-        const r = await fetch("/api/auth/change-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ current_password: cur, new_password: nw }),
-        });
-        const j = await r.json();
-
-        if (!j.ok) return alert("⚠️ " + j.error);
-
-        // ✅ موفق — پاک کردن فیلدها و نمایش پیام
-        pwOk.style.display = "block";
-        setTimeout(() => (pwOk.style.display = "none"), 4000);
-        pwCur.value = pwNew.value = pwNew2.value = "";
-      }
-      /* ---------- 💳 پرداخت آنلاین ---------- */
-      async function startPay(oid) {
-        const r = await fetch("/api/pay/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_id: oid }),
-        });
-        const j = await r.json();
-        if (!j.ok) return alert("⚠️ " + j.error);
-        location.href = j.pay_url; // 🚀 رفتن به درگاه زرین‌پال
-      }
-
-      /* ---------- 🎊 کانفتی کوچک ---------- */
-      function confettiMini() {
-        const colors = ["#ff4757", "#ffa502", "#2ed573", "#1e90ff"];
-        for (let i = 0; i < 18; i++) {
-          const p = document.createElement("div");
-          p.style.cssText = `position:fixed;z-index:999;width:10px;height:10px;top:-12px;left:${Math.random() * 100}vw;
-      background:${colors[i % 4]};border-radius:50%;pointer-events:none;transition:transform 2.5s linear,opacity 2.5s`;
-          document.body.appendChild(p);
-          requestAnimationFrame(() => {
-            p.style.transform = `translateY(${innerHeight + 40}px)`;
-            p.style.opacity = 0;
-          });
-          setTimeout(() => p.remove(), 2600);
-        }
-      }
-      /* ---------- 🖼️ لایت‌باکس و پیش‌نمایش ---------- */
-      function openLightbox(src) {
-        lbImg.src = src;
-        lightbox.classList.add("show");
-      }
-
-      function closeLightbox(e) {
-        // فقط کلیک روی پس‌زمینه یا ✖ می‌بندد؛ کلیک روی خود عکس نه!
-        if (e && e.target.tagName === "IMG") return;
-        lightbox.classList.remove("show");
-        lbImg.src = "";
-      }
-
-      // بستن با دکمه Esc کیبورد
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          lightbox.classList.remove("show");
-          lbImg.src = "";
-        }
-      });
-
-      // پیش‌نمایش زنده موقع انتخاب فایل (قبل از آپلود)
-      rxFile.addEventListener("change", () => {
-        const f = rxFile.files[0];
-        rxPreviewBox.innerHTML = "";
-        if (!f) return;
-
-        if (f.type.startsWith("image/")) {
-          const img = document.createElement("img");
-          img.src = URL.createObjectURL(f);
-          img.className = "rx-preview-img";
-          img.title = "کلیک = بزرگ‌نمایی";
-          img.onclick = () => openLightbox(img.src);
-          rxPreviewBox.appendChild(img);
-          rxPreviewBox.insertAdjacentHTML(
-            "beforeend",
-            '<br><small style="color:#888">👆 پیش‌نمایش — برای بزرگ‌نمایی کلیک کنید</small>',
-          );
-        } else if (f.type === "application/pdf") {
-          rxPreviewBox.innerHTML =
-            '<span style="font-size:2.4rem">📕</span><br>' +
-            '<small style="color:#888">فایل PDF انتخاب شد: ' +
-            esc(f.name) +
-            "</small>";
-        }
-      });
-      /* ---------- 📅 نوبت‌های من ---------- */
+      // ---------- 📅 نوبت‌ها ----------
       const APPT_ST = {
         "در انتظار تأیید": ["b-wait", "⏳"],
         "تأیید شده": ["b-ok", "✅"],
@@ -1515,10 +1517,13 @@
       };
 
       async function loadMyAppointments() {
-        const j = await (await fetch("/api/my-appointments")).json();
-        qcAppt.textContent = fa(j.appointments.length);
+        const r = await fetchWithAuth("/api/my-appointments");
+        const j = await r.json();
+        document.getElementById("qcAppt").textContent = fa(
+          j.appointments.length,
+        );
 
-        myApptList.innerHTML = j.appointments.length
+        document.getElementById("myApptList").innerHTML = j.appointments.length
           ? j.appointments
               .map((a) => {
                 const [cls, icon] =
@@ -1527,36 +1532,43 @@
     <div class="appt-item">
       <div>
         <b>🩺 ${esc(a.doctor)}</b>
-        <small>🕐 ${esc(a.time_slot)}</small>
+        <small>📅 ${esc(faDate(a.appt_date))} • 🕐 ${esc(a.time_slot)}</small>
         <small>🗓️ ثبت شده در: ${esc(a.created_at)}</small>
       </div>
       <span class="badge ${cls}">${icon} ${esc(a.status)}</span>
     </div>`;
               })
               .join("")
-          : '<div class="empty">هنوز نوبتی رزرو نکرده‌اید 🌱<br><small>از صفحه اصلی یا پنل پزشک رزرو کنید!</small></div>';
+          : '<div class="empty">هنوز نوبتی رزرو نکرده‌اید 🌱</div>';
       }
-      /* ---------- ❓ پرسش و پاسخ ---------- */
+
+      // ---------- ❓ سوالات ----------
       async function askQuestion() {
-        const t = qText.value.trim();
+        const t = document.getElementById("qText").value.trim();
         if (t.length < 10) return alert("⚠️ سوال باید حداقل ۱۰ حرف باشد!");
-        await fetch("/api/questions", {
+        await fetchWithAuth("/api/questions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: t }),
         });
-        qText.value = "";
-        qOk.style.display = "block";
-        setTimeout(() => (qOk.style.display = "none"), 3000);
+        document.getElementById("qText").value = "";
+        document.getElementById("qOk").style.display = "block";
+        setTimeout(
+          () => (document.getElementById("qOk").style.display = "none"),
+          3000,
+        );
         loadMyQuestions();
       }
 
       async function loadMyQuestions() {
-        const j = await (await fetch("/api/my-questions")).json();
-        myQList.innerHTML = j.questions.length
-          ? j.questions
-              .map(
-                (x) => `
+        try {
+          const r = await fetchWithAuth("/api/my-questions");
+          const j = await r.json();
+          document.getElementById("qcFaq").textContent = fa(j.questions.length);
+
+          document.getElementById("myQList").innerHTML = j.questions.length
+            ? j.questions
+                .map(
+                  (x) => `
     <div class="hist-item" style="border-right-color:#a55eea">
       <div>
         <b>❓ ${esc(x.question)}</b>
@@ -1565,17 +1577,80 @@
           x.answer
             ? `
           <div style="margin-top:8px;background:#eef6ff;border-radius:12px;padding:10px 14px;line-height:1.9">
-            <b>🩺 ${esc(x.answer.doctor_name)}:</b> ${esc(x.answer.answer)}
+            <b>🩺 پزشک:</b> ${esc(x.answer)}
           </div>`
             : `<small style="color:#b8860b">⏳ در انتظار پاسخ پزشک...</small>`
         }
       </div>
       <span class="badge ${x.answer ? "b-ok" : "b-wait"}">${x.answer ? "✅" : "⏳"}</span>
     </div>`,
-              )
-              .join("")
-          : '<div class="empty">هنوز سوالی نپرسیده‌اید 🌱</div>';
+                )
+                .join("")
+            : '<div class="empty">هنوز سوالی نپرسیده‌اید 🌱</div>';
+        } catch (e) {}
       }
+
+      // ---------- 🎊 کانفتی ----------
+      function confettiMini() {
+        const colors = ["#ff4757", "#ffa502", "#2ed573", "#1e90ff"];
+        for (let i = 0; i < 18; i++) {
+          const p = document.createElement("div");
+          p.style.cssText = `position:fixed;z-index:999;width:10px;height:10px;top:-12px;left:${Math.random() * 100}vw;
+    background:${colors[i % 4]};border-radius:50%;pointer-events:none;transition:transform 2.5s linear,opacity 2.5s`;
+          document.body.appendChild(p);
+          requestAnimationFrame(() => {
+            p.style.transform = `translateY(${innerHeight + 40}px)`;
+            p.style.opacity = 0;
+          });
+          setTimeout(() => p.remove(), 2600);
+        }
+      }
+
+      // ---------- 🖼️ لایت‌باکس ----------
+      function openLightbox(src) {
+        document.getElementById("lbImg").src = src;
+        document.getElementById("lightbox").classList.add("show");
+      }
+
+      function closeLightbox(e) {
+        if (e && e.target.tagName === "IMG") return;
+        document.getElementById("lightbox").classList.remove("show");
+        document.getElementById("lbImg").src = "";
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document.getElementById("lightbox").classList.remove("show");
+          document.getElementById("lbImg").src = "";
+        }
+      });
+
+      // پیش‌نمایش فایل نسخه
+      document.getElementById("rxFile")?.addEventListener("change", () => {
+        const f = document.getElementById("rxFile").files[0];
+        const box = document.getElementById("rxPreviewBox");
+        box.innerHTML = "";
+        if (!f) return;
+
+        if (f.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(f);
+          img.className = "rx-preview-img";
+          img.title = "کلیک = بزرگ‌نمایی";
+          img.onclick = () => openLightbox(img.src);
+          box.appendChild(img);
+          box.insertAdjacentHTML(
+            "beforeend",
+            '<br><small style="color:#888">👆 پیش‌نمایش</small>',
+          );
+        } else if (f.type === "application/pdf") {
+          box.innerHTML =
+            '<span style="font-size:2.4rem">📕</span><br><small style="color:#888">فایل PDF انتخاب شد</small>';
+        }
+      });
+
+      // ---------- 🚀 شروع ----------
+      document.addEventListener("DOMContentLoaded", loadProfile);
     </script>
   </body>
 </html>
